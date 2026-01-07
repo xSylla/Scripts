@@ -1,0 +1,57 @@
+spec:
+  inputs:
+    base_repo_name:
+      description: "Il nome base del progetto (es. 'Tree_Name')"
+      default: "Tree_Name"
+    visibility:
+      description: "Visibilità del progetto"
+      options: ["private", "internal", "public"]
+      default: "private"
+    #Gruppo Applicativo
+    group_path_applicationbusiness:
+      description: "Path completo del gruppo Applicationbusiness"
+      default: "your/path/desired/applicationbusiness"
+    #Pipeline
+    group_path_projects:
+      description: "Path completo del gruppo Projects"
+      default: "your/path/desired/projects"
+    #Projects
+    group_path_pipeline:
+      description: "Path completo del gruppo Pipelines"
+      default: "your/path/desired/pipelines"
+
+---
+
+stages:
+  - init
+  - deploy
+
+image:
+  name: hashicorp/terraform:latest
+  entrypoint: [""]
+
+variables:
+  TF_VAR_base_repo_name: $[[ inputs.base_repo_name ]]
+  TF_VAR_visibility: $[[ inputs.visibility ]]
+  TF_VAR_group_path_applicationbusiness: $[[ inputs.group_path_applicationbusiness ]]
+  TF_VAR_group_path_projects: $[[ inputs.group_path_projects ]]
+  TF_VAR_group_path_pipeline: $[[ inputs.group_path_pipeline ]]
+  TF_VAR_gitlab_token: $GITLAB_PAT 
+
+init:
+  stage: init 
+  script:
+    - terraform init
+    - terraform plan -out=planfile
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+
+deploy:
+  stage: deploy
+  script:
+    - terraform init
+    - terraform apply -auto-approve
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: on_success
